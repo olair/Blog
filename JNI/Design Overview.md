@@ -1,9 +1,9 @@
-# JNI 设计概述
+# JNI 设计概述 (第二章)
 * 原文连接 [Design Overview](https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/design.html)
 
 ## 翻译约定 
 1. 源文档中多次提到JNI functions,我们将其理解我JNI方法或者JNI功能又或者JNI接口函数，注意区分这几个名字和Native方法，不要搞混(已经混掉了可以看评论)。
-2. Native方法定义指在Java文件中定义的 'native int compute();'这种方法。
+2. Native方法定义指在Java文件中定义的 `native int compute();` 这种方法。
 3. 本机方法指JVM所运行的系统支持的原生代码(比如Linux原生支持C/C++，Win支持C#/C/C++等，当然还支持汇编)。
 4. Native方法实现指动态库中Native方法的实现。
 
@@ -29,29 +29,23 @@ Native方法中肯定会JNI接口指针这个参数。VM会保证在同一个Jav
 
 Native方法需要通过Java中的System.loadLibrary()方法加在进系统(Native方法将会被编译成库文件，例如Linux的本机代码C++，用C++实现好的Native方法将会被编译成搜库通过loadLibrary加载)。在下面的例子中，在Java类中的静态代码库中加载了Java虚拟机所处的平台上的库文件(比如在Win上加载的将是dll文件，在Linux加载的将是搜文件)，在这个库文件中实现了Native方法 f(int i, Stirng s):
 
-'''
 
-package pkg;
+    package pkg;
 
-class Cls { 
-    
-    native double f(int i, String s); 
+    class Cls { 
+        native double f(int i, String s); 
 
-    static { 
+        static { 
+            System.loadLibrary(“pkg_Cls”); 
+        } 
+    }
 
-        System.loadLibrary(“pkg_Cls”); 
-
-    } 
-
-}
-
-'''
 
 System.loadLibrary方法中的参数是要加载的库文件名字，这个库文件名字程序员可以自由定义。JVM系统会自动的遵循相应的平台标准将这个作为参数的库名字转为本地库名字。例如，Solaris系统中会将 pkg_Cls 转换为pkg_Cls.so,如果是在Win32系统上将会转换为pkg_Cls.dll。
-> 总结下，loadLibrary中的参数填写的时候并不是程序员可以随便填写，而是需要根据你所编译出来的本机代码库的名字进行填写，但是本机代码库的名字程序员是可以随便命名的(当然也受到系统平台的限制，一般文件后缀会有要求，还要些不能包含*啊等符号)，比如编译的Linux平台的动态代码库 media.so ，通过loadLibrary方法进行加载的时候参数必须这样 'System.loadLibrary(media)'，也就是说，最为loadLibrary的参数传入的时候只需要把后缀去掉就可以，VM会根据它所处的平台自动去添加后缀 (有动态库和静态库之分，动态库后缀 .so 静态库后缀 .a ，JVM只能加载动态库。Win中也有静态库动态库 分别是 .lib .dll)(还有一点需要提到就是还有一个System.load方法，用于在绝对路径加载动态库)。
+> 总结下，loadLibrary中的参数填写的时候并不是程序员可以随便填写，而是需要根据你所编译出来的本机代码库的名字进行填写，但是本机代码库的名字程序员是可以随便命名的(当然也受到系统平台的限制，一般文件后缀会有要求，还要些不能包含*啊等符号)，比如编译的Linux平台的动态代码库 media.so ，通过loadLibrary方法进行加载的时候参数必须这样 `System.loadLibrary(media)`，也就是说，最为loadLibrary的参数传入的时候只需要把后缀去掉就可以，VM会根据它所处的平台自动去添加后缀 (有动态库和静态库之分，动态库后缀 .so 静态库后缀 .a ，JVM只能加载动态库。Win中也有静态库动态库 分别是 .lib .dll)(还有一点需要提到就是还有一个System.load方法，用于在绝对路径加载动态库)。
 
 程序员可以用一个单个的动态库文件来实现在任意数量的Class定义的Native方法。但是有一个前提条件，要想这些Native方法可以使用，就必须使用同一个类加载器(Class Loader)加载这些Class。VM内部维护者每个类加载器加载的动态库列表。动态库提供商应该对动态库设计一个良好的命名方式用以尽量减少命名冲突的可能性。
-> 跟着'System.loadLibrary()'方法进去看一看会发现里面'Runtime.getRuntime().loadLibrary0(VMStack.getCallingClassLoader(), libname);'执行了这样一句。会将执行loadLibrary方法的Class所属的ClassLoader作为参数传进去。之所以将动态库跟类加载器绑定在一起和之所以会有类加载器这个东西道理是一样的，就是为了避免出现冲突，大家各用个的库版本。
+> 跟着`System.loadLibrary();`方法进去看一看会发现里面`Runtime.getRuntime().loadLibrary0(VMStack.getCallingClassLoader(), libname);`执行了这样一句。会将执行loadLibrary方法的Class所属的ClassLoader作为参数传进去。之所以将动态库跟类加载器绑定在一起和之所以会有类加载器这个东西道理是一样的，就是为了避免出现冲突，大家各用个的库版本。
 
 如果底层操作系统不支持动态链接(不支动态库)，所有Native方法实现必须预先硬链接到VM，在这种情况下，VM可以完成loadLibrary调用但是没有什么意思。
 > 该段原话是这样的 “If the underlying operating system does not support dynamic linking, all native methods must be prelinked with the VM. In this case, the VM completes the System.loadLibrary call without actually loading the library.”前文中我提到JNI是只支持动态链接的，这么快就被打脸，其实JNI也可以满足一些系统在不支持动态库的情况下又需要使用JNI接口函数功能的需求。没有实际操作过，猜测应该是将本机代码直接编译进JVM，但是估计这种不支持动态库的系统也没有JVM的支持，自己去实现个系统再实现的JVM那我没话说。。。。。。
@@ -71,85 +65,81 @@ VM将会负责检查在动态库中的方法的名字，跟Native方法进行匹
 > 大家用IDE直接生产Native对应方法时需要注意以上问题。
 
 在下面示例中，Native方法g可以不适用长名称进行链接，因为两位一个名称也为个g的方法并不是Native方法，并不在动态库中，不会应该本地代码库中Native方法的实现和Java中Native方法的定义的一一对应。
-'''
-class Cls1 { 
 
-  int g(int i); 
+    class Cls1 { 
 
-  native int g(double d); 
+        int g(int i); 
 
-} 
-'''
+        native int g(double d); 
+
+    } 
+
 我们采用一种简单的命名修改方案，以确保所有的Unicode字符都可以转为有效的C函数名称(应该不仅仅限于C)。我们使用下划线字符("_")代替完全限定名中的反斜杠("/")。由于在Java中名称和类型的描述不能以数字打头，所以我们可以使用_0，....，_9作为转义字符，像表2-1这样：
 
-'''
+```
 表2-1 Unicode字符转意
 转义字符           意义
 _0XXXX             一个Unicode字符XXXX，注意要使用小写而不是使用大小标示Unicode的字符编码
 _1                  字符"_"
 _2                  字符";"，一般用于类型签名中
 _3                  字符";"，也是用于类型签名
-'''
+```
 > Both the native methods and the interface APIs follow the standard library-calling convention on a given platform. For example, UNIX systems use the C calling convention, while Win32 systems use __stdcall.(没有实质性价值的一句话。)
 
 ### Native方法参数
 JNI接口指针是Native方法(这里指Native方法在动态库中的实现)的第一个参数。JNI接口指针是一个JNIEnv类型指针。第二个参数跟这个Native方法是否是静态方法有关，当Native方法时一个static方法的时候第二个参数是这个Java class的引用，当这个Native方法不是static方法时指向的是该Native方法所属的对象。
 其余的参数一一对应于Java中Native方法定义时的参数。Native方法通过返回值将其结果传递给调用者。第三章中将会讲到JNI中的数据类型以及数据结构，通过这些数据类型用来帮助程序开发者在Java和C类型之间相互映射。
 
-以下代码示例说明了如何使用C函数实现Native方法 'f(int i,String s);'。Native方法声明如下：
-'''
-package pkg; 
+以下代码示例说明了如何使用C函数实现Native方法 `f(int i,String s);`。Native方法声明如下：
 
-class Cls {
-    native double f(int i, String s);
-    // ...
-}
-'''
+
+    package pkg; 
+
+    class Cls {
+        native double f(int i, String s);
+        // ...
+    }
 
 使用采用长名称命名的C函数实现本机方法：
-'''
-jdouble Java_pkg_Cls_f__ILjava_lang_String_2 (
-     JNIEnv *env,        /* interface pointer */
-     jobject obj,        /* "this" pointer */
-     jint i,             /* argument #1 */
-     jstring s)          /* argument #2 */
-{
-     /* Obtain a C-copy of the Java string */
-     const char *str = (*env)->GetStringUTFChars(env, s, 0);
 
-     /* process the string */
-     ...
+    jdouble Java_pkg_Cls_f__ILjava_lang_String_2 (
+        JNIEnv *env,        /* interface pointer */
+        jobject obj,        /* "this" pointer */
+        jint i,             /* argument #1 */
+        jstring s)          /* argument #2 */
+    {
+        /* Obtain a C-copy of the Java string */
+        const char *str = (*env)->GetStringUTFChars(env, s, 0);
 
-     /* Now we are done with str */
-     (*env)->ReleaseStringUTFChars(env, s, str);
+        /* process the string */
+        ...
 
-     return ...
-}
-'''
+        /* Now we are done with str */
+        (*env)->ReleaseStringUTFChars(env, s, str);
+
+        return ...
+    }
 
 注意：如上所示我们必须也只能使用JNI接口指针env操作Java对象。
 使用C++，你可以写出稍微简洁一些的代码版本，如下代码所示：
-'''
-extern "C" /* specify the C calling convention */ 
 
-jdouble Java_pkg_Cls_f__ILjava_lang_String_2 (
+    extern "C" /* specify the C calling convention */ 
 
-     JNIEnv *env,        /* interface pointer */
-     jobject obj,        /* "this" pointer */
-     jint i,             /* argument #1 */
-     jstring s)          /* argument #2 */
+    jdouble Java_pkg_Cls_f__ILjava_lang_String_2 (
+        JNIEnv *env,        /* interface pointer */
+        jobject obj,        /* "this" pointer */
+        jint i,             /* argument #1 */
+        jstring s)          /* argument #2 */
+    {
+        const char *str = env->GetStringUTFChars(s, 0);
 
-{
-     const char *str = env->GetStringUTFChars(s, 0);
+        // ...
 
-     // ...
+        env->ReleaseStringUTFChars(s, str);
 
-     env->ReleaseStringUTFChars(s, str);
+        // return ...
+    }
 
-     // return ...
-}
-
-'''
 采用C++编写后，你会发现*号以及额外的参数都不需要了。但是，其实本质上和C还是一样的只是在C++中JNI接口函数被定义成内联成员函数，编译时它们将被扩展成C对应的函数。
 
 ## Native方法中引用Java对象
@@ -198,8 +188,10 @@ JNI接口函数的实现，必须确保在多个线程中运行的Native代码�
 
 ### 访问Java中的字段和方法
 JNI允许Native代码访问Java对象中的字段以及方法，JNI通过它们的名称以及类型签名来识别方法以及字段。往往只需要两步就可以从字段或者方法签名获取到该字段值或者使该方法执行。例如，为了执行cls类中的f(int i,String s);方法，采用如下步骤
-''' jmethodID mid = env->GetMethodID(cls, “f”, “(ILjava/lang/String;)D”); '''
-'''jdouble result = env->CallDoubleMethod(obj, mid, 10, str);'''
+
+    jmethodID mid = env->GetMethodID(cls, “f”, “(ILjava/lang/String;)D”);
+    jdouble result = env->CallDoubleMethod(obj, mid, 10, str);
+    
 上面的jmethodID 可以重复使用，而无需每次去Get一次(看jmethodID定义也可以看出来)。
 
 需要注意的是，字段或者方法ID并不会阻止VM卸载其所属的class对象。卸载对应class对象后，这些字段ID、方法ID将变得无效。因此如果打算长时间使用该ID，Native方法必须保证直接或间接持有该class的引用，或者每次都重新去获取字段或者方法ID。
@@ -213,10 +205,5 @@ JNI接口函数不负责检查编程错误，包括NULL指针以及非法参数�
 
 程序员不得将非法指针或者错误类型参数传递给JNI接口函数，因为这样做很可能会导致难以预料的结果，包括系统状态损坏或者VM崩溃。
 
-### 异步异常
-在多线程环境下，除了当前线程以外的线程可能会产生异常，相对于当前线程这就是一个异步异常。但是，一个异步异常并不会马上影响到当前线程中的本机代码的执行。直到出现下面的情况：
-
-
-
-
-https://www.cnblogs.com/it-green-hand/p/7471955.html 数三退一问题（Java）
+### JNI开发中的异常
+异常在JNI开发中用起来并不困难，但是要明白文档中所说的还是需要点内容的，后面会专门针对JNI异常讲解(该段暂时没有翻译)。
