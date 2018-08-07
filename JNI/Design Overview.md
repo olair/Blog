@@ -1,11 +1,12 @@
 # JNI 设计概述 (第二章)
-* 原文连接 [Design Overview](https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/design.html)
+* 原文连接 [Design Overview](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/design.html)
 
 ## 翻译约定 
 1. 源文档中多次提到JNI functions,我们将其理解我JNI方法或者JNI功能又或者JNI接口函数，注意区分这几个名字和Native方法，不要搞混(已经混掉了可以看评论)。
 2. Native方法定义指在Java文件中定义的 `native int compute();` 这种方法。
 3. 本机方法指JVM所运行的系统支持的原生代码(比如Linux原生支持C/C++，Win支持C#/C/C++等，当然还支持汇编)。
 4. Native方法实现指动态库中Native方法的实现。
+5. 翻译完发现JNI文档也有好几个版本，虽然大体内容差不多，但是最新版本的比之前版本还是有所扩充的，不如下面的VM链接静态库的地方(上方链接已链接到最新版本)。
 
 <!-- TOC -->
 
@@ -62,16 +63,16 @@ Native方法需要通过Java中的System.loadLibrary()方法加在进系统(Nati
 
 
 System.loadLibrary方法中的参数是要加载的库文件名字，这个库文件名字程序员可以自由定义。JVM系统会自动的遵循相应的平台标准将这个作为参数的库名字转为本地库名字。例如，Solaris系统中会将 pkg_Cls 转换为pkg_Cls.so,如果是在Win32系统上将会转换为pkg_Cls.dll。
-> 总结下，loadLibrary中的参数填写的时候并不是程序员可以随便填写，而是需要根据你所编译出来的本机代码库的名字进行填写，但是本机代码库的名字程序员是可以随便命名的(当然也受到系统平台的限制，一般文件后缀会有要求，还要些不能包含*啊等符号)，比如编译的Linux平台的动态代码库 media.so ，通过loadLibrary方法进行加载的时候参数必须这样 `System.loadLibrary(media)`，也就是说，最为loadLibrary的参数传入的时候只需要把后缀去掉就可以，VM会根据它所处的平台自动去添加后缀 (有动态库和静态库之分，动态库后缀 .so 静态库后缀 .a ，JVM只能加载动态库。Win中也有静态库动态库 分别是 .lib .dll)(还有一点需要提到就是还有一个System.load方法，用于在绝对路径加载动态库)。
+
+> 总结下，loadLibrary中的参数填写的时候并不是程序员可以随便填写，而是需要根据你所编译出来的本机代码库的名字进行填写，但是本机代码库的名字程序员是可以随便命名的(当然也受到系统平台的限制，一般文件后缀会有要求，还要些不能包含*、&、￥等符号)，比如编译的Linux平台的动态代码库 media.so ，通过loadLibrary方法进行加载的时候参数必须这样 `System.loadLibrary(media)`，也就是说，最为loadLibrary的参数传入的时候只需要把后缀去掉就可以，VM会根据它所处的平台自动去添加后缀 (有动态库和静态库之分，动态库后缀 .so 静态库后缀 .a ，JVM只能加载动态库。Win中也有静态库动态库 分别是 .lib .dll)(还有一点需要提到就是还有一个System.load方法，用于在绝对路径加载动态库)。
 
 程序员可以用一个单个的动态库文件来实现在任意数量的Class定义的Native方法。但是有一个前提条件，要想这些Native方法可以使用，就必须使用同一个类加载器(Class Loader)加载这些Class。VM内部维护者每个类加载器加载的动态库列表。动态库提供商应该对动态库设计一个良好的命名方式用以尽量减少命名冲突的可能性。
+
 > 跟着`System.loadLibrary();`方法进去看一看会发现里面`Runtime.getRuntime().loadLibrary0(VMStack.getCallingClassLoader(), libname);`执行了这样一句。会将执行loadLibrary方法的Class所属的ClassLoader作为参数传进去。之所以将动态库跟类加载器绑定在一起和之所以会有类加载器这个东西道理是一样的，就是为了避免出现冲突，大家各用个的库版本。
 
-如果底层操作系统不支持动态链接(不支动态库)，所有Native方法实现必须预先硬链接到VM，在这种情况下，VM可以完成loadLibrary调用但是没有什么意思。
-> 该段原话是这样的 “If the underlying operating system does not support dynamic linking, all native methods must be prelinked with the VM. In this case, the VM completes the System.loadLibrary call without actually loading the library.”前文中我提到JNI是只支持动态链接的，这么快就被打脸，其实JNI也可以满足一些系统在不支持动态库的情况下又需要使用JNI接口函数功能的需求。没有实际操作过，猜测应该是将本机代码直接编译进JVM，但是估计这种不支持动态库的系统也没有JVM的支持，自己去实现个系统再实现的JVM那我没话说。。。。。。
+如果底层操作系统不支持动态链接(不支动态库)，所有Native方法实现必须预先硬链接到VM，在这种情况下，VM可以完成loadLibrary调用但是没有什么实际意义。程序员还可以通过调用JNI接口函数中的RegisterNatives()方法将Native方法与本机代码关联起来(会有专门的章节介绍)。
 
-程序员还科技通过调用JNI接口函数中的RegisterNatives()方法将Native方法与本机代码关联起来。RegisterNatives方法对于静态链接是格外有用的。
-> 该段中最后一句在此打脸前面的内容，根据下面内容以及其原理来讲，此处指的静态链接应该与so库(Linux 支持的动态库)或者a库(静态库)无关，而是指JNI中特有的两种将C++函数与Java函数进行链接绑定的方式之一。
+> 前文中我提到JNI是只支持动态链接的，这么快就被打脸，其实JNI也可以满足一些系统在不支持动态库的情况下又需要使用JNI接口函数功能的需求。但是这种需求过于小众，而且实现也有点复杂，根据静态库的原理来看甚至需要重新对VM进行编译，一般没有这种需求，所以不进行讨论，具体的可以参看最新官方文档，内容不是很长。
 
 ### 关于本地方法名字的定义格式
 动态链接过程中，动态连接器将根据Native名字以及本机方法名字在这两种方法之间产生关联信息。Native方法的实现方法名字是通过一下几个部分组合而成：
@@ -188,20 +189,24 @@ JNI允许开发者在Native代码中的任何地方去主动的删除本地引�
 ## 访问Java对象
 JNI接口函数提供了基于全局引用以及本地引用的丰富的访问函数。这意味着Native代码不需要关心VM内部是怎么表示Java对象的，在任何VM平台上Native方法都可以顺利编译执行。
 
-通过不透明的方式使用JNI接口函数去操作Java对象的确会比直接去操作C语言结构数据要多一些性能损耗。但是，我们相信，在大多说情况下，Java开发者是为了通过Native方法去执行很重要的任务代码，而这个重要性将忽略掉这点性能开销。
+通过不透明的方式使用JNI接口函数去操作Java对象的确会比直接去操作C语言结构数据要多一些性能损耗。但是，我们相信，在大多数情况下，Java开发者是为了通过Native方法去执行很重要的任务代码，而这个重要性将忽略掉这点性能开销。
 
 ### 访问基本数据类型数组
 对于包含许多基本数据类型的大型Java对象而言(一般数组具有这个特征)，因为JNI接口产生的性能损耗往往是不能接受的(比如执行向量或者矩阵运算的Native方法)。使用JNI接口函数去迭代每一个元素将是非常低效的。
 
 下面一种解决方案引入了"pinning(固定)"的概念，Native代码可以要求VM固定住数组内容。Native代码直接访问数组在VM中的直接指针。但是这种方法有两个要求：
+
 * 垃圾收集器必须支持固定。
 * VM必须在内存中连续布局原生数据类型数组。虽然这是大多数原始数组最自然的实现，但是boolean类型数组却不一般。Although this is the most natural implementation for most primitive arrays, boolean arrays can be implemented as packed or unpacked.Therefore, native code that relies on the exact layout of boolean arrays will not be portable.(可以不理解。。。。)
 
 为了更好的实现，我们采用了一种妥协的方案达到上面的要求。
 首先，我们提供了一组函数可以复制Java原始数据类型数组中的一部分到宿主机内存中。当Native代码中只需要访问大型数组中的少量元素时可以使用。
 第二，开发者可以使用另一组函数来检索数组对象的固定版本(pinning将数组固定之后再访问)。但是请注意，这些功能可能依然需要JVM执行存储空间分配和复制操作，究竟是否复制取决于虚拟机自己的实现，具体情况如下：
+
 * 如果垃圾收集器主持固定(pinning)，而且Java中的数据布局方式跟宿主机中使用的布局方式相同，那就不需要复制。
 * 负责，将数组复制到不可以移动的内存块(例如C堆中)，并且复制的时候需要根据宿主机以及JVM具体情况执行必要的格式转换。JNI接口函数将返回对应的指针。
+
+
 最后，JNI接口函数中提供方法用于通知VM，Native方法中不再需要访问数组元素。通过调用这些方法，系统会取消该数组的固定(pinning)，或者将原始数组与其不可移动的副本进行协调并释放副本(协调一般指将副本更新到Java数据中去)。
 这些方法将给VM很大的灵活性。垃圾收集器算法可以针对每个给定的数组对象做单独的不同的处理。比如，对于较小的对象可以进行复制，对于较大的对象可以采用固定。
 
