@@ -51,10 +51,11 @@ System.loadLibrary方法中的参数是要加载的库文件名字，这个库�
 > 该段原话是这样的 “If the underlying operating system does not support dynamic linking, all native methods must be prelinked with the VM. In this case, the VM completes the System.loadLibrary call without actually loading the library.”前文中我提到JNI是只支持动态链接的，这么快就被打脸，其实JNI也可以满足一些系统在不支持动态库的情况下又需要使用JNI接口函数功能的需求。没有实际操作过，猜测应该是将本机代码直接编译进JVM，但是估计这种不支持动态库的系统也没有JVM的支持，自己去实现个系统再实现的JVM那我没话说。。。。。。
 
 程序员还科技通过调用JNI接口函数中的RegisterNatives()方法将Native方法与本机代码关联起来。RegisterNatives方法对于静态链接是格外有用的。
-> 该段中最后一句在此打脸前面的内容，我没切加一个TODO后面看来。
+> 该段中最后一句在此打脸前面的内容，根据下面内容以及其原理来讲，此处指的静态链接应该与so库(Linux 支持的动态库)或者a库(静态库)无关，而是指JNI中特有的两种将C++函数与Java函数进行链接绑定的方式之一。
 
 ### 关于本地方法名字的定义格式
 动态链接过程中，动态连接器将根据Native名字以及本机方法名字在这两种方法之间产生关联信息。Native方法的实现方法名字是通过一下几个部分组合而成：
+
 * 前缀Java_。
 * Native方法所处Java类的完全限定类名(以下划线作为分隔符)。
 * 下划线分隔符。
