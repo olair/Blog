@@ -49,9 +49,13 @@ Android GPS定位主要通过LocationManager类来实现，其中提供了很多
 * getAllProviders
 * getProviders
 * getProvider
-* getProviders
 * getBestProvider
 
 在国内没有实际用处，只需要GPS即可。
 
 ### 请求定位相关方法
+
+* requestLocationUpdates
+* requestSingleUpdate
+* requestLocationUpdates
+
