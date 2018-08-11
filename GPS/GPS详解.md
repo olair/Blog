@@ -2,9 +2,35 @@
 
 GPS本身并不复杂，但是因为GPS本身定位比网络还慢的原因用好GPS还是需要费点事的。
 
-## GPS相关类说明(android.location包)
+<!-- TOC -->
 
-### 主要必须涉及到的类
+- [GPS详解](#gps详解)
+    - [1. GPS相关类说明(android.location包)](#1-gps相关类说明androidlocation包)
+        - [1.1. 主要必须涉及到的类](#11-主要必须涉及到的类)
+        - [1.2. API 23及以下版本](#12-api-23及以下版本)
+        - [1.3. API 24及以上版本](#13-api-24及以上版本)
+        - [1.4. 不需要用到的类](#14-不需要用到的类)
+    - [2. GPS相关基础知识说明](#2-gps相关基础知识说明)
+    - [3. GPS定位相关方法(以API 23及以下版本为例)](#3-gps定位相关方法以api-23及以下版本为例)
+        - [3.1. Provider相关方法](#31-provider相关方法)
+        - [3.2. 请求定位相关方法(只看方法名，忽略具体参数)](#32-请求定位相关方法只看方法名忽略具体参数)
+        - [3.3. 添加GPS状态监听](#33-添加gps状态监听)
+    - [4. GPS定位步骤](#4-gps定位步骤)
+        - [4.1. Android中 GPS定位极为简单，首先拿到LocationManager对象：](#41-android中-gps定位极为简单首先拿到locationmanager对象)
+        - [4.2. 创建定位成功的监听器](#42-创建定位成功的监听器)
+        - [4.3. 将定位监听器注册到LocationManager上去](#43-将定位监听器注册到locationmanager上去)
+    - [5. 卫星状态监听，并根据卫星状态判断是否继续定位](#5-卫星状态监听并根据卫星状态判断是否继续定位)
+        - [5.1. 创建卫星状态监听器](#51-创建卫星状态监听器)
+        - [5.2. 监听卫星状态](#52-监听卫星状态)
+        - [5.3. 基于卫星状态的定位实现](#53-基于卫星状态的定位实现)
+    - [6. GPS定位方案改进版](#6-gps定位方案改进版)
+    - [7. Blog 说明](#7-blog-说明)
+
+<!-- /TOC -->
+
+## 1. GPS相关类说明(android.location包)
+
+### 1.1. 主要必须涉及到的类
 
 * LocationManager   用于发起定位请求
 * LocationListener  用于监听定位信息的有关更新(包括位置变化、相关定位设备状态改变或用户打开关闭相关定位设备)
@@ -13,22 +39,22 @@ GPS本身并不复杂，但是因为GPS本身定位比网络还慢的原因用�
 
 采用GPS定位时往往需要监听卫星状态，根据卫星状态去决定是否继续采用GPS定位还是采用其他替补定位方式。在android的location包中同样提供了相关功能，但是在API 24以上定位相关包结构有所更改。
 
-### API 23及以下版本
+### 1.2. API 23及以下版本
 
 * GpsStatus     所有搜索到的卫星状态信息，其中有一个GpsStatus.Listener用于监听卫星状态的改变。
 * GpsSatellite  单个的卫星信息，包括卫星的方位、高度、伪随机噪声码、信噪比等信息，具体的可进入源码查看。
 
-### API 24及以上版本
+### 1.3. API 24及以上版本
 
 * GnssStatus    相当于将GpsStatus以及GpsSatellite整合在了一起
 
 API 24只是对定位接口进行了一些接口上的改进，除了使用起来更加方便以外没有什么其他优势。
 
-### 不需要用到的类
+### 1.4. 不需要用到的类
 
 * Address、Geocoder、GnssClock、GnssMeasurement、GnssMeasurementsEvent、GnssNavigationMessage、SettingInjectorService、LocationProvider这些class 用于通过经纬度获取地理信息以及自定义一些定位实现等，只有定位需求的问题并不需要这些。
 
-## GPS相关基础知识说明
+## 2. GPS相关基础知识说明
 
 需要了解，在设置界面或者下拉菜单中的GPS按钮，仅仅是一个GPS的总开关而已，打开它GPS并不会开始定位，只是打开了GPS的访问权限，使具有权限的APP可以去请求GPS进行定位，真正GPS开始工作以及停止工作需要应用程序去控制。
 
@@ -41,11 +67,11 @@ LocationManager中包含有几种定位模式，NETWORK_PROVIDER、GPS_PROVIDER�
 * [一篇关于GPS定位写得最详实清晰的文章之一](https://blog.csdn.net/zhangbijun1230/article/details/80958036)
 * [GPS的一些浅显知识兼介绍一下GPS测试仪](https://blog.csdn.net/shanghaibao123/article/details/48520235)
 
-## GPS定位相关方法(以API 23及以下版本为例)
+## 3. GPS定位相关方法(以API 23及以下版本为例)
 
 Android GPS定位主要通过LocationManager类来实现，其中提供了很多方法，大体上可以分为这么几类方法：
 
-### Provider相关方法
+### 3.1. Provider相关方法
 
 * createProvider
 * getAllProviders
@@ -55,7 +81,7 @@ Android GPS定位主要通过LocationManager类来实现，其中提供了很多
 
 这几个方法用于获取位置提供商，但是在国内没有实际用处，只需要GPS即可。
 
-### 请求定位相关方法(只看方法名，忽略具体参数)
+### 3.2. 请求定位相关方法(只看方法名，忽略具体参数)
 
 * requestLocationUpdates (开始GPS定位，GPS开始工作)
 * requestSingleUpdate (开始GPS定位，GPS开始工作)
@@ -63,20 +89,20 @@ Android GPS定位主要通过LocationManager类来实现，其中提供了很多
 
 这几个方法开始请求GPS定位，用于获取位置信息。
 
-### 添加GPS状态监听
+### 3.3. 添加GPS状态监听
 
 * addGpsStatusListener
 * removeGpsStatusListener
 
 GPS定位过程中，卫星会处于不断变化中，这几个方法可以注册卫星状态监听器用于实时监测卫星状态的变化。
 
-## GPS定位步骤
+## 4. GPS定位步骤
 
-### Android中 GPS定位极为简单，首先拿到LocationManager对象：
+### 4.1. Android中 GPS定位极为简单，首先拿到LocationManager对象：
 
 `LocationManager mLocationManager = (LocationManager) context.getSystemService(LOCATION_SERVICE);`
 
-### 创建定位成功的监听器
+### 4.2. 创建定位成功的监听器
 
 ```java
 LocationListner listener = new LocationListener() {
@@ -104,7 +130,7 @@ LocationListner listener = new LocationListener() {
 };
 ```
 
-### 将定位监听器注册到LocationManager上去
+### 4.3. 将定位监听器注册到LocationManager上去
 
 上面提到 *请求定位相关方法*，这些以request开头的方法，可以将我们写好的定位监听注册到系统的定位进程上(其实是注册在了你的LocationManager对象上，而LocationManager对象中一个内部类对象注册在系统进程上，IPC相关)，系统定位进程收到定位请求开始根据具体参数执行定位请求，当系统进程成功获取到定位信息后回去遍历通知所有注册过来的位置监听器(LocationListener)。当然，如果你的设备只支持GPS，你定位请求使用NETWORK_PROVIDER正常情况下是不会通知你的位置监听器的。具体看下request相关方法：
 
@@ -131,13 +157,13 @@ request相关方法中还有一类requestSingleUpdate，该类requestSingle方�
 
 > 需要注意的是，不管是上面requestLocationUpdates方法或者是requestSingleUpdate方法，从该方法被调用开始直至成功获取到定位信息，这段时间内GPS芯片将处于活跃状态，而活跃的GPS芯片会影响到系统休眠，导致系统不能进入休眠状态，造成耗电。具体点说，调用requestLocationUpdates将导致GPS一直处于活跃状态，而调用requestSingleUpdate方法会导致第一次回调onLocationChange之前GPS芯片一直处于活跃状态。所以，在某些状况下设备必须具备主动停掉GPS的机制，当然这种机制要使用LocationManager的removeUpdates去实现。
 
-## 卫星状态监听，并根据卫星状态判断是否继续定位
+## 5. 卫星状态监听，并根据卫星状态判断是否继续定位
 
 上面提到，为了节省Android设备的电量，启动GPS定位后某些情况下必须要关掉GPS。如果GPS正常定位，数秒内定位成功，这种情况下很好处理，我们采用requestSingleUpdate方法实现单次定位即可，但是如果处于室内，没有GPS信号的情况下我们将长时间处于定位状态，电池电量将很快耗尽。而对于requestLocationUpdates方法更是需要在某种情况下去停掉GPS。
 
 我们最重要的任务就是要找到关掉GPS的时机。基于上面分析可以找到这个时机，就是，当我们确定GPS在这种情况下永远都不能成功定位时，就需要关闭掉GPS。但是怎么确认GPS永远也定不到位呢？这就需要去通过GPS芯片收到的GPS卫星信号去做出判断。于是就引出了我们对于GPS卫星状态的监听。
 
-### 创建卫星状态监听器
+### 5.1. 创建卫星状态监听器
 
 ```java
 GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
@@ -152,7 +178,7 @@ GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
 };
 ```
 
-### 监听卫星状态
+### 5.2. 监听卫星状态
 
 ```java
 GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
@@ -178,7 +204,7 @@ GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
 
 > 可以定位的标准为，三颗以上信噪比达到25以上。
 
-### 基于卫星状态的定位实现
+### 5.3. 基于卫星状态的定位实现
 
 于是，我们在GpsStatus.Listener中去判断卫星状态，判断达到25以上的卫星是否有3颗，有的话就进行定位，否则停止定位。代码很简单如下：
 
@@ -224,9 +250,14 @@ locationManager.addGpsStatusListener(gpsStatusListener);
 locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, getMainLooper());
 ```
 
-## GPS定位方案改进版
+## 6. GPS定位方案改进版
 
 梳理了GPS的定位流程以及相关要点，实现了一个简单版的GPS定位实现。但是这样依然不完美，GPS定位方案依然需要改进。
 假设GPS需要每五分钟定位一次，使用requestLocationUpdates方法时间参数设置为5min对于普通移动设备来说显然不合适，定位失败的情况下电量消耗会过大。所以呢，我们定位方案改进如下：
 
 考虑GPS热启动的话一般5s内可以定位成功(GPS 芯片特别差就另当别论)，所以我们为GPS定位过程加上一个超时时间5s，GPS定位开始后，5s内定位成功就成功返回并关掉GPS定位，出现失败的时候，我们应该去计算刚才5s内每次卫星状态改变时是否都达到了定位标准。如果5s内有30%以上的概率达到了定位标准很可能GPS处于冷启动状态，或者GPS设备偶尔处于有遮盖物的地方，则延长定位时间直至定位成功或者卫星状态达标概率低于30%。
+
+## 7. Blog 说明
+
+* 比较好的GPS定位方案
+* GPS没有收到定位回调 因为GPS定位很慢，并且室内信号很弱
