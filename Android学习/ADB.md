@@ -16,3 +16,5 @@ adb shell input tap 50 250
 adb shell input text abc
 
 adb -s deviceCode shell input text adb
+
+adb shell dumpsys package +包名
