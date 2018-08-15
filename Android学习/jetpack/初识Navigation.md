@@ -42,6 +42,4 @@ Android Jetpack的具体介绍可以参看官方文档：
 
 ## Jetpack中的Navigation(位于Architecture中)
 
-今天我们体验下Jetpack中的Navigation库，Navigation库是官方为单Activity开发提供的官方支持，并且官方专门为Navigation开发了Navigation的图形化界面、专门定制了一套安全的数据传输方案，但是因为整个Navigation库还没有正式发布，所以这个安全的数据传输方案目前还有点问题。
-
-> 需要注意的是，因为Navigation功能包含在Android Studio 3.2版本中，而Android Studio 3.2版本目前还处于Beta阶段，根据我亲身体验来说，Navigation图形化界面以及数据传输方案
+今天我们体验下Jetpack中的Navigation库，Navigation库是官方为单Activity开发提供的官方支持。官方为Navigation开发了IDEA的插件可以使用图像化手段处理页面跳转关系；除了采用Bundle进行数据传输以外还提供了gradle插件帮助开发者使用图形化界面来传递参数；另外还提供了各个跳转之间的切换动画。
