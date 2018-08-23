@@ -29,10 +29,10 @@ android 6.0 API23 新增了Doze(low-power idle) 以及APP Standby模式
 
 对于android 4.4(API 19),添加了AlarmManager的批处理,并且添加了setExact()方法，可以用来设置准时的Alarm，如果你 targetSdkVersion to "18" or lower 的话即使使用set或者setRepeating也是准时的(在4.4运行，行为将和4.4以前版本保持一致)
 
-
 电量优化有三个步骤：
-程序员角度 
-1. 需要遵循 Lazy First 
+程序员角度
+
+1. 需要遵循 Lazy First
 2. 利用Android提供的平台特性
 3. 使用工具找到电量消耗的元凶
 
@@ -46,7 +46,6 @@ Reduce Defer Coalesce
 工具
 Profile GPU Rendering 和 Battery Historian
 
-
 Doze 模式中 系统忽略wake locks AlarmManager的setExacty()以及setWindow()设置的警报都会被延期到下一个窗口期 但是setAlarmClock() 依然可以正确的触发(在系统触发setAlarmClock方法之前系统退出Doze) 虽然提供了AndAllowWhileIdle()相关方法，但是该方法已依然有限制，看optimizing for battery life 中说的不能超过九分钟一次，而方法注释中说的 1分钟一次/15分钟一次
 
 APP Standby相当于一个细粒度的Doze(针对APP的，从这句话看出 App Standby allows the system to determine that an app is idle when the user is not actively using it. )
@@ -58,7 +57,6 @@ APP生成了一个用户可见的内容(在锁屏或者notification tray中)
 APP是一个设备管理员
 
 应用可以被添加进入白名单，这样在Doze以及APP Standby模式下也可以访问网络或者持有 [Partial wake locks](https://developer.android.google.cn/reference/android/os/PowerManager#PARTIAL_WAKE_LOCK),
-
 
 但是我没有测试加入白名单以后是否setAndAllowWhileIdle依然受到限制
 
