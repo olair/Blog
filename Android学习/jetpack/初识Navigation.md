@@ -172,4 +172,49 @@ Navigation中的包命名方式已经改为以androidx.为包首，但是当前�
 3. 点击这条线，属性面板中的内容会有所变化，如下：
    * Type Action 建立连接既是创建一个Action标签，Action标签用于表示一个导航时事件
    * ID 该Action的ID
-   * Destination 目标组件
+   * Destination 目标组件(Activity或者Fragment的ID)
+
+进入Navigation编辑窗口的文本界面，可以看到一个Action标签被添加到了源组件中，而且在这个Action标签属性中有它的ID以及目标组件的ID。样例代码如下：
+
+##### TODO
+
+#### 让APP通过Navigation来控制页面切换
+
+现在我们已经可以使用Navigation将各个组件组合起来，但是应该注意到我们创建的Navigation文件(nav_graph.xml)并没有整合到我们的代码，目前将Navigation功能应用进来还是有一些麻烦的，但不排除后面会简化Navigation的应用方式。
+
+##### 设置一个起始组件
+
+首先我们需要有一个起始的源组件作为Navigation默认打开的组件(TODO)。起始组件的设置很简单：
+
+1. 打开Navigation编辑串口
+2. 点击你想设置为起始源组件的组件
+3. 点击其属性窗格中的 Set Start Destination 按钮
+
+这样就将该组件设置为Navigation的起始组件，可以看下nav_graph.xml文件中多了一条属性(TODO)。
+
+##### 修改Activity来支持Navigation
+
+Activity可以通过实现NavHost接口来通过Navigation实现页面切换。NavHost可以作为一个空视图添加到Activity的布局文件中。
+
+在Navigation中NavHost的默认实现是NavHostFragment(androidx.navigation.fragment.NavHostFragment)，因为是Fragment所以也直接支持添加到布局文件中(布局解析器可以解析fragment标签)。
+
+将NavHostFragment加入到布局之后，还有几个针对Navigation框架的几个属性需要设置。
+
+1. app:navGraph 用于关联Navigation文件(nav_graph.xml)
+2. app:defaultNavHost="true" 该属性设置为true，Navigation将接管系统的返回键。但是目前还需要手动在Activity代码中添加一行：
+
+```java
+@Override
+public boolean onSupportNavigateUp() {
+    return Navigation.findNavController(this, R.id.nav_host_fragment).navigateUp();
+}
+```
+
+> 也可以通过代码的形式将NavHostFragment添加到Activity中，如下所示
+> ```java
+> NavHostFragment finalHost = NavHostFragment.create(R.navigation.example_graph);
+>getSupportFragmentManager().beginTransaction()
+>    .replace(R.id.nav_host, finalHost)
+>    .setPrimaryNavigationFragment(finalHost) // this is the equivalent to app:defaultNavHost="true"
+>    .commit();
+> ```
