@@ -1,8 +1,9 @@
-AlarmManager 详解
-
+# AlarmManager 详解
 
 ## 方法列表
+
 方法还是蛮多的
+
 * cancel(PendingIntent operation)
 * cancel(AlarmManager.OnAlarmListener listener)
 * getNextAlarmClock()

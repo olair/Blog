@@ -1,0 +1,9 @@
+# PendingIntent
+
+PendingIntent需要注意：
+
+1. 因为PendingIntent只是对系统token的一个引用，所以应用程序死亡并不会影响到PendingIntent的存在，如果之后应用又重新启动并重新添加了一个相同的PendingIntent则判断相同则会将其删除。
+2. 经常性的使用错误，可能使用两个只有不同的extra属性的Intent创建PendingIntent期待在获取两次不同的PendingInent调用，但达不到要求。
+3. 可以通过Intent.filterEquals来判断两个Intent是否具有相同的效果属性。
+4. 可以通过使用不同的请求码来达到要求
+5. 可以通过FLAG_CANCEL_CURRENT或者FLAG_UPDATE_CURRENT来取消其他或者更新和你提供的Intent关联的PendingIntent。
