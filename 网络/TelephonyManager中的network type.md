@@ -1,8 +1,9 @@
-[【TelephonyManager研究系列】NETWORK_TYPE详解](https://blog.csdn.net/u010684551/article/details/40978675)
+# [【TelephonyManager研究系列】NETWORK_TYPE详解](https://blog.csdn.net/u010684551/article/details/40978675)
 
 GPRS 在GSM基础上发展起来的PS业务，即分组数据业务，属于2.5G，这个用来上网，而GSM在GPRS出现之后就仅仅用于语音通话。
 
-参考 
+参考
+
 * [GPRS，GSM，WAP三者有什么区别?](https://blog.csdn.net/w_andy/article/details/1554754)
 * [GSM与GPRS的区别](https://blog.csdn.net/zqixiao_09/article/details/52506528)
 
