@@ -1,5 +1,32 @@
 # 初识Navigation(Google为 单Activity+多Fragment 开发方式提供的官方支持)
 
+<!-- TOC -->
+
+- [初识Navigation(Google为 单Activity+多Fragment 开发方式提供的官方支持)](#初识navigationgoogle为-单activity多fragment-开发方式提供的官方支持)
+    - [简单介绍下新的android支持包Jetpack](#简单介绍下新的android支持包jetpack)
+    - [Jetpack中的Navigation(位于Architecture中)](#jetpack中的navigation位于architecture中)
+    - [开始构建一个使用Navigation的项目](#开始构建一个使用navigation的项目)
+        - [安装Android Studio 3.2版本](#安装android-studio-32版本)
+        - [在项目中使用Navigation](#在项目中使用navigation)
+            - [添加依赖](#添加依赖)
+            - [创建Navigation资源文件](#创建navigation资源文件)
+            - [开启Android Studio对Navigation的图形界面支持](#开启android-studio对navigation的图形界面支持)
+            - [操作Navigation的图形化界面、熟悉Navigation使用](#操作navigation的图形化界面熟悉navigation使用)
+            - [创建目标组件](#创建目标组件)
+            - [连接到目标组件](#连接到目标组件)
+                - [TODO](#todo)
+            - [让APP通过Navigation来控制页面切换](#让app通过navigation来控制页面切换)
+                - [设置一个起始组件](#设置一个起始组件)
+                - [修改Activity来支持Navigation](#修改activity来支持navigation)
+                - [将页面切换事件绑定在UI组件上](#将页面切换事件绑定在ui组件上)
+                - [Navigation对菜单Menu的支持](#navigation对菜单menu的支持)
+                - [Navigation的数据传递](#navigation的数据传递)
+                - [嵌套的Navigation布局](#嵌套的navigation布局)
+                - [Navigation的一些事件监听](#navigation的一些事件监听)
+                - [Navigation对过渡动画的支持](#navigation对过渡动画的支持)
+
+<!-- /TOC -->
+
 ## 简单介绍下新的android支持包Jetpack
 
 Android Developer上面挂着Jetpack已经很久了。Jetpack是一组基于Android平台的库。Jetpack中包含四个层面的东西
