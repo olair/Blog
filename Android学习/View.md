@@ -31,3 +31,15 @@ case R.styleable.View_isScrollContainer:
 * android 5.0以后增加了Tint [Android Tint使用](https://blog.csdn.net/zhuoxiuwu/article/details/50976337)
 * android 5.0以后还新增了[阴影和剪裁](https://www.cnblogs.com/McCa/p/4465597.html)
 * android 5.0 [Material Design Reveal effect(揭示效果) 你可能见过但是叫不出名字的小效果](https://www.cnblogs.com/dd-dd/p/6195985.html)
+
+View里面有三个对象：
+
+* CheckForLongPress
+* CheckForTap
+* PerformClick
+
+分别用来表示长按事件(500ms)、轻触事件(100ms)、点击事件。
+
+View中的setPressed(true, x, y); 只是设置View以及其子View的状态为Pressed,没有调用什么方法。
+
+1. View的构造方法中有通过TypedArray.getDimensionPixelSize其中可以发现，转换时采用四舍五入的方式。

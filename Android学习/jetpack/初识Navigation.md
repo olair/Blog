@@ -1,5 +1,32 @@
 # 初识Navigation(Google为 单Activity+多Fragment 开发方式提供的官方支持)
 
+<!-- TOC -->
+
+- [初识Navigation(Google为 单Activity+多Fragment 开发方式提供的官方支持)](#初识navigationgoogle为-单activity多fragment-开发方式提供的官方支持)
+    - [简单介绍下新的android支持包Jetpack](#简单介绍下新的android支持包jetpack)
+    - [Jetpack中的Navigation(位于Architecture中)](#jetpack中的navigation位于architecture中)
+    - [开始构建一个使用Navigation的项目](#开始构建一个使用navigation的项目)
+        - [安装Android Studio 3.2版本](#安装android-studio-32版本)
+        - [在项目中使用Navigation](#在项目中使用navigation)
+            - [添加依赖](#添加依赖)
+            - [创建Navigation资源文件](#创建navigation资源文件)
+            - [开启Android Studio对Navigation的图形界面支持](#开启android-studio对navigation的图形界面支持)
+            - [操作Navigation的图形化界面、熟悉Navigation使用](#操作navigation的图形化界面熟悉navigation使用)
+            - [创建目标组件](#创建目标组件)
+            - [连接到目标组件](#连接到目标组件)
+                - [TODO](#todo)
+            - [让APP通过Navigation来控制页面切换](#让app通过navigation来控制页面切换)
+                - [设置一个起始组件](#设置一个起始组件)
+                - [修改Activity来支持Navigation](#修改activity来支持navigation)
+                - [将页面切换事件绑定在UI组件上](#将页面切换事件绑定在ui组件上)
+                - [Navigation对菜单Menu的支持](#navigation对菜单menu的支持)
+                - [Navigation的数据传递](#navigation的数据传递)
+                - [嵌套的Navigation布局](#嵌套的navigation布局)
+                - [Navigation的一些事件监听](#navigation的一些事件监听)
+                - [Navigation对过渡动画的支持](#navigation对过渡动画的支持)
+
+<!-- /TOC -->
+
 ## 简单介绍下新的android支持包Jetpack
 
 Android Developer上面挂着Jetpack已经很久了。Jetpack是一组基于Android平台的库。Jetpack中包含四个层面的东西
@@ -218,3 +245,98 @@ public boolean onSupportNavigateUp() {
 >    .setPrimaryNavigationFragment(finalHost) // this is the equivalent to app:defaultNavHost="true"
 >    .commit();
 > ```
+
+通过以上步骤，在你的Activity中就有了一个NavController对象，可以进行页面切换动作。
+
+##### 将页面切换事件绑定在UI组件上
+
+Navigation通过NavController对象来控制界面切换，获得NavController对象的方式有一下几种：
+
+* `NavHostFragment.findNavController(Fragment)`
+* `Navigation.findNavController(Activity, @IdRes int viewId)`
+* `Navigation.findNavController(View)`
+* `Navigation.findNavController(this, R.id.nav_host_fragment)`这一种
+
+获取到NavController对象之后，通过其`navigate()`方法去控制界面跳转，`navigate()方法中的参数就是在Navigation布局文件(nav_graph.xml)中的目标组件的ID(注意不是其layout资源ID，这样有一个优势，可以自由的定义其过渡动画)。以下代码展示一个页面切换的例子。
+
+```java
+viewTransactionsButton.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View view) {
+        Navigation.findNavController(view).navigate(R.id.viewTransactionsAction);
+    }
+});
+```
+
+Navigation框架将自动维护一个用于返回的堆栈，当应用程序打开时会将首页加入该堆栈，后面没打开一页会就会将该页放入堆栈，相反的，如果用户点击了向前按钮或者回退按钮就将自动调用`NavController.navigateUp()`和`NavController.popBackStack()`方法回退到刚才的页面。
+
+针对Button，Navigation框架还提供了一种简单的方式来设置界面切换事件，如下：
+
+```java
+button.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.next_fragment, null));
+```
+
+##### Navigation对菜单Menu的支持
+
+Navigation对Menu的支持是最好的。一般情况下，无论是选项菜单还是上下文菜单亦或是NavigationView菜单都可以通过使用相同的ID达到相互关联
+
+##### Navigation的数据传递
+
+Navigation在不同Fragment之间有两种数据传递方式，其中一种。
+
+1. 在Navigation图形界面选中目标组件
+2. 点击右侧属性面板的 Add(+)按钮，在其中可以设置参数类型、默认值、参数名字等。
+3. 看Navigation图形界面的Text，可以看到多了一些属性信息。如下：
+
+```java
+<fragment
+   android:id="@+id/confirmationFragment"
+   android:name="com.example.cashdog.cashdog.ConfirmationFragment"
+   android:label="fragment_confirmation"
+   tools:layout="@layout/fragment_confirmation">
+   <argument android:name="amount" android:defaultValue=”0” />
+```
+
+调用navigate方法时将包含了参数信息的Bundle对象传过去。如下
+
+```java
+Bundle bundle = new Bundle();
+bundle.putString("amount", amount);
+Navigation.findNavController(view).navigate(R.id.confirmationAction, bundle);
+```
+
+在目标组件中采用如下方式拿到值：
+
+```java
+TextView tv = view.findViewById(R.id.textViewAmount);
+tv.setText(getArguments().getString("amount"));
+```
+
+另外还有一种参数传递方式，需要引入插件：
+`apply plugin: 'androidx.navigation.safeargs'`
+但是感觉使用体验很是一般不过多介绍。需要的可以查看[Pass data between destinations in a type-safe way](https://developer.android.google.cn/topic/libraries/architecture/navigation/navigation-implementing#Safe-args)
+
+##### 嵌套的Navigation布局
+
+Navigation布局可以像View一样嵌套，简单点说就是，可以实现一个Navigation不居中包含另外一个Navigation布局。
+
+创建一个子Navigation布局的流程如下：
+
+1. 按住Shift按键不松，选中所有想加入到子布局中的目标组件。
+2. 右击查看菜单栏，选择*Move to Nested Graph > New Graph*
+
+可以查看熟悉下子布局的属性，在子布局上面双击即可进入子布局。
+
+> 可以使用 `<include app:graph="@navigation/included_graph"/>`标签来实现嵌套子布局。但是在Android Studio3.2中实际展示效果并不好。
+> 另外Navigation也是支持[deep link](https://developer.android.google.cn/training/app-links/deep-linking)的，但是基于国内应用的的情况并不多就不具体说了。
+
+##### Navigation的一些事件监听
+
+Navigation可以通过`addOnNavigatedListener()`方法添加目标组件切换的事件监听。
+
+##### Navigation对过渡动画的支持
+
+1. 定义动画资源
+2. 在图形界面选中
+
+如上所述很简单的就可以实现过渡动画的支持。
