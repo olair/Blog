@@ -116,3 +116,7 @@ C++11 中对于静态变量，编译器会自动加上多线程同步的处理�
 ### 纯虚函数
 
 不实现，类似于Java抽象方法。
+
+## Cmake
+
+D:\AndroidSDK\cmake\3.6.4111459\android.toolchain.cmake中定义了一些全局变量
